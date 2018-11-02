@@ -63,30 +63,40 @@ class IsoImagePlugin(SourcePlugin):
         """
         Create loader-specific (syslinux) config
         """
-        splash = os.path.join(cr_workdir, "ISO/boot/splash.jpg")
-        if os.path.exists(splash):
-            splashline = "menu background splash.jpg"
+        configfile = get_bitbake_var("SYSLINUX_CFG_LIVE")
+        if configfile:
+            syslinux_conf = get_custom_config(configfile)
+            if syslinux_conf:
+                logger.debug("Using custom configuration file %s for isolinux.cfg",
+                             configfile)
+            else:
+                raise WicError("configfile is specified "
+                               "but failed to get it from %s", configfile)
         else:
-            splashline = ""
+            splash = os.path.join(cr_workdir, "ISO/boot/splash.jpg")
+            if os.path.exists(splash):
+                splashline = "menu background splash.jpg"
+            else:
+                splashline = ""
 
-        bootloader = creator.ks.bootloader
+            bootloader = creator.ks.bootloader
 
-        syslinux_conf = ""
-        syslinux_conf += "PROMPT 0\n"
-        syslinux_conf += "TIMEOUT %s \n" % (bootloader.timeout or 10)
-        syslinux_conf += "\n"
-        syslinux_conf += "ALLOWOPTIONS 1\n"
-        syslinux_conf += "SERIAL 0 115200\n"
-        syslinux_conf += "\n"
-        if splashline:
-            syslinux_conf += "%s\n" % splashline
-        syslinux_conf += "DEFAULT boot\n"
-        syslinux_conf += "LABEL boot\n"
+            syslinux_conf = ""
+            syslinux_conf += "PROMPT 0\n"
+            syslinux_conf += "TIMEOUT %s \n" % (bootloader.timeout or 10)
+            syslinux_conf += "\n"
+            syslinux_conf += "ALLOWOPTIONS 1\n"
+            syslinux_conf += "SERIAL 0 115200\n"
+            syslinux_conf += "\n"
+            if splashline:
+                syslinux_conf += "%s\n" % splashline
+            syslinux_conf += "DEFAULT boot\n"
+            syslinux_conf += "LABEL boot\n"
 
-        kernel = "/bzImage"
-        syslinux_conf += "KERNEL " + kernel + "\n"
-        syslinux_conf += "APPEND initrd=/initrd LABEL=boot %s\n" \
-                             % bootloader.append
+            kernel = "/bzImage"
+            syslinux_conf += "KERNEL " + kernel + "\n"
+            syslinux_conf += "APPEND initrd=/initrd LABEL=boot %s\n" \
+                                 % bootloader.append
 
         logger.debug("Writing syslinux config %s/ISO/isolinux/isolinux.cfg",
                      cr_workdir)
@@ -99,7 +109,11 @@ class IsoImagePlugin(SourcePlugin):
         """
         Create loader-specific (grub-efi) config
         """
-        configfile = creator.ks.bootloader.configfile
+        if creator.ks.bootloader.configfile:
+            configfile = creator.ks.bootloader.configfile
+        else:
+            configfile = get_bitbake_var("GRUB_CFG_LIVE")
+
         if configfile:
             grubefi_conf = get_custom_config(configfile)
             if grubefi_conf:
