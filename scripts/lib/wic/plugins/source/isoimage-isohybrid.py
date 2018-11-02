@@ -329,13 +329,15 @@ class IsoImagePlugin(SourcePlugin):
 
                 if re.match("x86_64", target_arch):
                     grub_image = "grub-efi-bootx64.efi"
+                    grub_image_dst = "bootx64.efi"
                 elif re.match('i.86', target_arch):
                     grub_image = "grub-efi-bootia32.efi"
+                    grub_image_dst = "bootia32.efi"
                 else:
                     raise WicError("grub-efi is incompatible with target %s" %
                                    target_arch)
 
-                grub_target = os.path.join(target_dir, grub_image)
+                grub_target = os.path.join(target_dir, grub_image_dst)
                 if not os.path.isfile(grub_target):
                     grub_src = os.path.join(deploy_dir, grub_image)
                     if not os.path.exists(grub_src):
